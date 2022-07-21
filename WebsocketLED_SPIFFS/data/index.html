@@ -43,11 +43,11 @@
         </div>
         <div>
             <h2>Actions</h2>
-            <p><button id="home" class="button">Home</button></p>
-            <p><button id="goHome" class="button">Go To Home</button></p>
-            <p><button id="goStart" class="button">Go To Start</button></p>
-            <p><button id="start" class="button">Start Scanning</button></p>
-            <p><button id="stop" class="stop_button">Stop</button></p>
+            <p><button id="home" onclick="click(home)" class="button">Home</button></p>
+            <p><button id="goHome" onclick="click(goHome)" class="button">Go To Home</button></p>
+            <p><button id="goStart" onclick="click(goStart)" class="button">Go To Start</button></p>
+            <p><button id="start" onclick="click(start)" class="button">Start Scanning</button></p>
+            <p><button id="stp" onclick="click(stp)" class="stop_button">Stop</button></p>
         </div>
     </div>
     <script>
@@ -59,7 +59,7 @@
             websocket = new WebSocket(gateway);
             websocket.onopen = onOpen;
             websocket.onclose = onClose;
-            websocket.onmessage = onMessage; // <-- add this line
+            websocket.onmessage = onMessage;
         }
         function onOpen(event) {
             console.log('Connection opened');
@@ -69,14 +69,17 @@
             setTimeout(initWebSocket, 2000);
         }
         function onMessage(event) {
-            var state;
-            if (event.data == "1") {
-                state = "ON";
+            console.log(event);
+            
+            // parse incoming message
+            const msg = JSON.parse(event.data);
+
+            if (msg.type == "report") {
+                document.getElementById('status').innerHTML = msg.status;
+                document.getElementById('m_vel').innerHTML = msg.vel;
+                document.getElementById('m_start').innerHTML = msg.start;
+                document.getElementById('m_stop').innerHTML = msg.end;
             }
-            else {
-                state = "OFF";
-            }
-            document.getElementById('state').innerHTML = state;
         }
         function onLoad(event) {
             initWebSocket();
@@ -85,8 +88,16 @@
         function initButton() {
             document.getElementById('button').addEventListener('click', toggle);
         }
-        function toggle() {
-            websocket.send('toggle');
+        function click(btn) {
+            
+            const msg = {
+                type: "button",
+                action: btn
+            };
+
+            console.log(msg);
+
+            websocket.send(JSON.stringify(msg));
         }
         function formSubmit() {
             // https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
@@ -96,11 +107,13 @@
                 velocity: document.getElementById("velocity").value,
                 start_pos: document.getElementById("start_pos").value,
                 end_pos: document.getElementById("end_pos").value
-            }
+            };
 
-            websocket.send(JSON.stringify(msg))
+            console.log(msg);
+
+            websocket.send(JSON.stringify(msg));
             
-            alert("form submitted")
+            alert("form submitted");
         }
     </script>
 </body>
