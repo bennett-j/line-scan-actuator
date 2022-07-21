@@ -33,6 +33,22 @@
                 <input type="submit" value="Submit">
             </form>
         </div>
+        <div>
+            <h2>Monitor</h2>
+            <p class="mon">Status: <span id="status">---</span></p>
+            <p class="mon">Velocity: <span id="m_vel">---</span></p>
+            <p class="mon">Start Position: <span id="m_start">---</span></p>
+            <p class="mon">End Position: <span id="m_end">---</span></p>
+            <p class="mon">Current Position: <span id="m_pos">---</span></p>
+        </div>
+        <div>
+            <h2>Actions</h2>
+            <p><button id="home" class="button">Home</button></p>
+            <p><button id="goHome" class="button">Go To Home</button></p>
+            <p><button id="goStart" class="button">Go To Start</button></p>
+            <p><button id="start" class="button">Start Scanning</button></p>
+            <p><button id="stop" class="stop_button">Stop</button></p>
+        </div>
     </div>
     <script>
         var gateway = `ws://${window.location.hostname}/ws`;
@@ -73,6 +89,17 @@
             websocket.send('toggle');
         }
         function formSubmit() {
+            // https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
+            // create msg containing form submission and send as JSON
+            const msg = {
+                type: "settings",
+                velocity: document.getElementById("velocity").value,
+                start_pos: document.getElementById("start_pos").value,
+                end_pos: document.getElementById("end_pos").value
+            }
+
+            websocket.send(JSON.stringify(msg))
+            
             alert("form submitted")
         }
     </script>
