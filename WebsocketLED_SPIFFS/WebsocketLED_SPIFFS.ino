@@ -18,6 +18,7 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 #include <ESPAsyncWebServer.h>
 #include <SPIFFS.h>
 #include <WebSocketsServer.h>
+#include <ArduinoJson.h>
 
 //=======================//
 //  Constants & Globals  //
@@ -34,6 +35,10 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 bool ledState = 0;
+
+int velocity = 8;
+int start_pos = 0;
+int end_pos = 1000;
 
 //=============//
 //  Functions  //
@@ -61,10 +66,45 @@ void notifyClients() {
   ws.textAll(String(ledState));
 }
 
+void sendReport() {
+    DynamicJsonDocument doc(1024);
+
+    doc["type"] = "report";
+    doc["m_vel"] = velocity;
+    doc["m_start"] = start_pos;
+    doc["m_stop"] = end_pos;
+
+    String output;
+    serializeJson(doc, output);
+    //Serial.println(output);
+  
+    ws.textAll(output);
+}
+
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-    data[len] = 0;
+    
+    //  >data< is the pointer 
+    // >*data< dereferences to yield the value
+
+    
+
+    //Serial.println(msg);
+
+    //https://arduinojson.org/
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, (char*)data);
+
+    if (strcmp(doc["type"], "settings") == 0) {
+        Serial.println("it's a settings message");
+        velocity = doc["velocity"];
+        start_pos = doc["start_pos"];
+        end_pos = doc["end_pos"];
+    }
+    sendReport();
+    
+    data[len] = 0; //guess this is termination char
     if (strcmp((char*)data, "toggle") == 0) {
       ledState = !ledState;
       
@@ -81,6 +121,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
   switch (type) {
     case WS_EVT_CONNECT:
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      sendReport();
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
