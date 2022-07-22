@@ -1,53 +1,70 @@
-<!-- https://shawnhymel.com/1882/how-to-create-a-web-server-with-websockets-using-an-esp32-in-arduino/ -->
-
-
 <!DOCTYPE HTML>
 <html>
 
 <head>
-    <title>ESP Web Server</title>
+    <title>ESP32 Control</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
 <body>
-    <div class="topnav">
-        <h1>ESP WebSocket Server</h1>
+    <div class="topbar">
+        <h1>Line Scanning Camera Control</h1>
     </div>
     <div class="content">
         <div class="card">
-            <h2>Output - GPIO 2</h2>
-            <p class="state">state: <span id="state">%STATE%</span></p>
-            <p><button id="button" class="button">Toggle</button></p>
-        </div>
-        <div>
             <h2>Setup Form</h2>
             <form onsubmit="formSubmit()">
-                <label for="velocity">Velocity (mm/s):</label>
-                <input type="number" id="velocity"><br>
-                <label for="start_pos">Start Position (mm):</label>
-                <input type="number" id="start_pos"><br>
-                <label for="end_pos">End Position (mm):</label>
-                <input type="number" id="end_pos"><br>
-                <input type="submit" value="Submit">
+                <table>
+                    <tr>
+                        <td><label for="velocity">Velocity (mm/s):</label></td>
+                        <td><input type="number" id="velocity"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="start_pos">Start Position (mm):</label></td>
+                        <td><input type="number" id="start_pos"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="end_pos">End Position (mm):</label></td>
+                        <td><input type="number" id="end_pos"></td>
+                    </tr>
+                </table>
+                <input type="submit" value="Submit" class="btn" id="submit_btn">
             </form>
         </div>
-        <div>
+        <div class="card">
             <h2>Monitor</h2>
-            <p class="mon">Status: <span id="status">---</span></p>
-            <p class="mon">Velocity: <span id="m_vel">---</span></p>
-            <p class="mon">Start Position: <span id="m_start">---</span></p>
-            <p class="mon">End Position: <span id="m_end">---</span></p>
-            <p class="mon">Current Position: <span id="m_pos">---</span></p>
+            <table class="monitor">
+                <tr>
+                    <td>Status:</td>
+                    <td id="status">---</td>
+                </tr>
+                <tr>
+                    <td>Velocity:</td>
+                    <td id="m_vel">---</td>
+                </tr>
+                <tr>
+                    <td>Start Position: </td>
+                    <td id="m_start">---</td>
+                </tr>
+                <tr>
+                    <td>End Position:</td>
+                    <td id="m_end">---</td>
+                </tr>
+                <tr>
+                    <td>Current Position:</td>
+                    <td id="m_pos">---</td>
+                </tr>
+            </table>
         </div>
-        <div>
+        <div class="card">
             <h2>Actions</h2>
-            <p><button id="home" onclick="click('home')" class="button">Home</button></p>
-            <p><button id="goHome" onclick="click('goHome')" class="button">Go To Home</button></p>
-            <p><button id="goStart" onclick="click('goStart')" class="button">Go To Start</button></p>
-            <p><button id="start" onclick="click('start')" class="button">Start Scanning</button></p>
-            <p><button id="stp" onclick="click('stp')" class="stop_button">Stop</button></p>
+            <button id="home" class="btn">Home</button>
+            <button id="goHome" class="btn">Go To Home</button>
+            <button id="goStart" class="btn">Go To Start</button>
+            <button id="start" class="btn">Start Scanning</button>
+            <button id="stp" class="btn">Stop</button>
         </div>
     </div>
     <script src="script.js"></script>
