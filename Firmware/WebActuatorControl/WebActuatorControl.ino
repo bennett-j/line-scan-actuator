@@ -14,6 +14,13 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 2. press Ctrl + Alt + I (after new inclues) to rebuild the c_cpp_properties.json and have it find the right includes
 */
 
+#define DEBUG // comment out to remove debugging
+#ifdef DEBUG
+    #define DEBUG_PRINT(x) Serial.println(x)
+#else
+    #define DEBUG_PRINT(x)
+#endif
+
 // Import libraries
 #include <WiFi.h>
 #include <AsyncTCP.h>
@@ -77,6 +84,8 @@ AccelStepper stepper = AccelStepper(stepper.DRIVER, STEP_PIN, DIR_PIN);
 // Send stepper to end position then home position
 void startHomeStepper()
 {
+    DEBUG_PRINT("Starting Homing");
+
     status = HOMING_OUT;
     // before first homing, stepper is disabled
     stepper.enableOutputs();
@@ -149,41 +158,49 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
         if (strcmp(doc["type"], "settings") == 0)
         {
-            Serial.println("it's a settings message");
+            DEBUG_PRINT("Incoming settings message");
+            DEBUG_PRINT((char *)data);
+
             velocity = doc["velocity"];
             start_pos = doc["start_pos"];
             end_pos = doc["end_pos"];
         }
         else if (strcmp(doc["type"], "button") == 0)
         {
+            DEBUG_PRINT("Incoming button message");
+
             /* TODO: check which actions are permitted. 
              * Definitely need some validation on whether start and stop are within bounds
              */
             if (strcmp(doc["action"], "stp") == 0)
             {
+                DEBUG_PRINT("Action: STOP");
                 stepper.stop();
             }
             else if (strcmp(doc["action"], "home") == 0)
             {
+                DEBUG_PRINT("Action: HOME");
                 startHomeStepper();
             }
             else if (strcmp(doc["action"], "goHome") == 0)
             {
+                DEBUG_PRINT("Action: GO HOME");
                 stepper.setMaxSpeed(TRAVEL_SPEED);
                 stepper.moveTo(0);
             }
             else if (strcmp(doc["action"], "goStart") == 0)
             {
+                DEBUG_PRINT("Action: GOSTART");
                 stepper.setMaxSpeed(TRAVEL_SPEED);
                 stepper.moveTo(mm2step(start_pos));
             }
             else if (strcmp(doc["action"], "start") == 0)
             {
+                DEBUG_PRINT("Action: START");
                 stepper.setMaxSpeed(velocity);
                 stepper.moveTo(mm2step(end_pos));
             }
         }
-
         sendReport();
     }
 }
@@ -289,6 +306,8 @@ void setup()
 
     stepper.setAcceleration(mm2step(ACCEL));
     // wait to set speed and enable outputs in homing
+
+    DEBUG_PRINT("Setup complete.");
 }
 
 //========//
@@ -304,9 +323,12 @@ void loop()
     case HOMING_OUT:
         if (digitalRead(IDLE_LIM_PIN) == LOW)
         {
+            DEBUG_PRINT("REACHED IDLE END");
             // has reached idle end
             // temporarily save current pos but not right because we don't know start
             maxSteps = stepper.currentPosition();
+            // start move plenty of steps to home end
+            stepper.move(mm2step(2 * -1200));
             status = HOMING_IN;
         }
         else
@@ -318,13 +340,17 @@ void loop()
     case HOMING_IN:
         if (digitalRead(HOME_LIM_PIN) == LOW)
         {
-            // has reached idle end
+            // has reached home end
+            DEBUG_PRINT("REACHED HOME END");
 
             // set current position to 0 and save max position
             int tmpMax = maxSteps;
             int nowPos = stepper.currentPosition();
             maxSteps = tmpMax - nowPos;
             stepper.setCurrentPosition(0);
+
+            DEBUG_PRINT("Max Steps (mm):");
+            DEBUG_PRINT(step2mm(maxSteps));
 
             // now homed, set status to IDLE
             status = IDLE;
