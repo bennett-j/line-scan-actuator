@@ -6,6 +6,7 @@ https://github.com/espressif/arduino-esp32/tree/master/libraries/WiFi/examples/W
 https://randomnerdtutorials.com/esp32-web-server-spiffs-spi-flash-file-system/
 https://randomnerdtutorials.com/esp32-websocket-server-arduino/
 
+
 VS code IntelliSense
 https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino#intellisense
 1. ensure Arduino: Initialize (don't forget access palette by Ctrl + Shift + P)
@@ -25,8 +26,8 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 //=======================//
 
 // Network details
-const char* ssid = "ESP32";
-const char* password = "5pud5";
+const char* ssid = "ESP32_AccessPoint";
+const char* password = "letMe1nPlz";
 
 const int HTTP_PORT = 80;
 const int LED_PIN = 2;
@@ -70,13 +71,14 @@ void sendReport() {
     DynamicJsonDocument doc(1024);
 
     doc["type"] = "report";
+    doc["status"] = "IDLE";
     doc["m_vel"] = velocity;
     doc["m_start"] = start_pos;
     doc["m_stop"] = end_pos;
 
     String output;
     serializeJson(doc, output);
-    //Serial.println(output);
+    Serial.println(output);
   
     ws.textAll(output);
 }
@@ -95,6 +97,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     //https://arduinojson.org/
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, (char*)data);
+    // nb (char*)data casts it to datatype char (not uint8_t)
 
     if (strcmp(doc["type"], "settings") == 0) {
         Serial.println("it's a settings message");

@@ -76,9 +76,9 @@
 
             if (msg.type == "report") {
                 document.getElementById('status').innerHTML = msg.status;
-                document.getElementById('m_vel').innerHTML = msg.vel;
-                document.getElementById('m_start').innerHTML = msg.start;
-                document.getElementById('m_stop').innerHTML = msg.end;
+                document.getElementById('m_vel').innerHTML = msg.m_vel;
+                document.getElementById('m_start').innerHTML = msg.m_start;
+                document.getElementById('m_stop').innerHTML = msg.m_stop;
             }
         }
         function onLoad(event) {
