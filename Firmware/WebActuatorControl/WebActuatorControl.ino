@@ -60,6 +60,18 @@ const int ENABLE_PIN = 0;
 const int HOME_LIM_PIN = 0;
 const int IDLE_LIM_PIN = 0;
 
+const int steps_per_mm = 50;
+
+int mm2step(int mm)
+{
+    return mm * steps_per_mm;
+}
+
+int step2mm(int step)
+{
+    return step / steps_per_mm; // TODO: deal with rounding
+}
+
 const int ACCEL = mm2step(1000); // I think I can use this function here
 const int HOME_SPEED = mm2step(10);
 const int TRAVEL_SPEED = mm2step(20);
@@ -70,7 +82,7 @@ int end_pos = 1000;
 
 int maxSteps = 0;
 
-const int steps_per_mm = 50;
+
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -93,16 +105,6 @@ void startHomeStepper()
     stepper.setMaxSpeed(HOME_SPEED);
     // start move plenty of steps to idle end
     stepper.move(mm2step(2 * 1200));
-}
-
-int mm2step(int mm)
-{
-    return mm * steps_per_mm;
-}
-
-int step2mm(int step)
-{
-    return step / steps_per_mm; // TODO: deal with rounding
 }
 
 // WiFi event handler to provide notifications via Serial
@@ -244,6 +246,15 @@ void onCSSRequest(AsyncWebServerRequest *request)
     request->send(SPIFFS, "/style.css", "text/css");
 }
 
+// Callback: send javascript
+void onJSRequest(AsyncWebServerRequest *request)
+{
+    IPAddress remote_ip = request->client()->remoteIP();
+    Serial.println("[" + remote_ip.toString() +
+                   "] HTTP GET request of " + request->url());
+    request->send(SPIFFS, "/script.js", "text/js");
+}
+
 // Callback: send 404 if requested file does not exist
 void onPageNotFound(AsyncWebServerRequest *request)
 {
@@ -290,6 +301,8 @@ void setup()
     server.on("/", HTTP_GET, onIndexRequest);
     // On HTTP request for style sheet, provide style.css
     server.on("/style.css", HTTP_GET, onCSSRequest);
+    // On HTTP request for javascript, provide script.js
+    server.on("/script.js", HTTP_GET, onJSRequest);
     // Handle requests for pages that do not exist
     server.onNotFound(onPageNotFound);
 

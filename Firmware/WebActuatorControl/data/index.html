@@ -43,79 +43,14 @@
         </div>
         <div>
             <h2>Actions</h2>
-            <p><button id="home" onclick="click(home)" class="button">Home</button></p>
-            <p><button id="goHome" onclick="click(goHome)" class="button">Go To Home</button></p>
-            <p><button id="goStart" onclick="click(goStart)" class="button">Go To Start</button></p>
-            <p><button id="start" onclick="click(start)" class="button">Start Scanning</button></p>
-            <p><button id="stp" onclick="click(stp)" class="stop_button">Stop</button></p>
+            <p><button id="home" onclick="click('home')" class="button">Home</button></p>
+            <p><button id="goHome" onclick="click('goHome')" class="button">Go To Home</button></p>
+            <p><button id="goStart" onclick="click('goStart')" class="button">Go To Start</button></p>
+            <p><button id="start" onclick="click('start')" class="button">Start Scanning</button></p>
+            <p><button id="stp" onclick="click('stp')" class="stop_button">Stop</button></p>
         </div>
     </div>
-    <script>
-        var gateway = `ws://${window.location.hostname}/ws`;
-        var websocket;
-        window.addEventListener('load', onLoad);
-        function initWebSocket() {
-            console.log('Trying to open a WebSocket connection...');
-            websocket = new WebSocket(gateway);
-            websocket.onopen = onOpen;
-            websocket.onclose = onClose;
-            websocket.onmessage = onMessage;
-        }
-        function onOpen(event) {
-            console.log('Connection opened');
-        }
-        function onClose(event) {
-            console.log('Connection closed');
-            setTimeout(initWebSocket, 2000);
-        }
-        function onMessage(event) {
-            console.log(event);
-            
-            // parse incoming message
-            const msg = JSON.parse(event.data);
-
-            if (msg.type == "report") {
-                document.getElementById('status').innerHTML = msg.status;
-                document.getElementById('m_vel').innerHTML = msg.m_vel;
-                document.getElementById('m_start').innerHTML = msg.m_start;
-                document.getElementById('m_stop').innerHTML = msg.m_stop;
-            }
-        }
-        function onLoad(event) {
-            initWebSocket();
-            initButton();
-        }
-        function initButton() {
-            document.getElementById('button').addEventListener('click', toggle);
-        }
-        function click(btn) {
-            
-            const msg = {
-                type: "button",
-                action: btn
-            };
-
-            console.log(msg);
-
-            websocket.send(JSON.stringify(msg));
-        }
-        function formSubmit() {
-            // https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications
-            // create msg containing form submission and send as JSON
-            const msg = {
-                type: "settings",
-                velocity: document.getElementById("velocity").value,
-                start_pos: document.getElementById("start_pos").value,
-                end_pos: document.getElementById("end_pos").value
-            };
-
-            console.log(msg);
-
-            websocket.send(JSON.stringify(msg));
-            
-            alert("form submitted");
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 
 </html>
