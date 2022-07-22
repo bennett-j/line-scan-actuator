@@ -21,7 +21,8 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 #include <SPIFFS.h>
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h>
-
+#include <AccelStepper.h>
+#include <TMCStepper.h> //TODO: implement this functionality
 
 
 //=======================//
@@ -33,20 +34,65 @@ const char* ssid = "ESP32_AccessPoint";
 const char* password = "letMe1nPlz";
 
 const int HTTP_PORT = 80;
+
+enum Status {
+    DISABLE,
+    HOMING_OUT,
+    HOMING_IN,
+    IDLE,
+    MOVING
+};
+
+Status status = DISABLE;
+
+// TODO: pin assignment
 const int LED_PIN = 2;
+const int STEP_PIN = 0;
+const int DIR_PIN = 0;
+const int ENABLE_PIN = 0;
+const int HOME_LIM_PIN = 0;
+const int IDLE_LIM_PIN = 0;
 
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-
-bool ledState = 0;
+const int ACCEL = mm2step(1000); // I think I can use this function here
+const int HOME_SPEED = mm2step(10);
 
 int velocity = 8;
 int start_pos = 0;
 int end_pos = 1000;
 
+int maxSteps = 0;
+
+const int steps_per_mm = 50;
+
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+
+AccelStepper stepper = AccelStepper(stepper.DRIVER, STEP_PIN, DIR_PIN);
+
+
 //=============//
 //  Functions  //
 //=============//
+
+// Send stepper to end position then home position
+void startHomeStepper() {
+    status = HOMING_OUT;
+    // before first homing, stepper is disabled
+    stepper.enableOutputs();
+    
+    stepper.setMaxSpeed(HOME_SPEED);
+    // start move plenty of steps to idle end
+    stepper.move(mm2step(2*1200));
+ 
+}
+
+int mm2step(int mm) {
+    return mm * steps_per_mm;
+}
+
+int step2mm(int step) {
+    return step / steps_per_mm; //TODO: deal with rounding
+}
 
 // WiFi event handler to provide notifications via Serial
 void WiFiEvent(WiFiEvent_t event){
@@ -66,9 +112,6 @@ void WiFiEvent(WiFiEvent_t event){
     }
 }
 
-void notifyClients() {
-  ws.textAll(String(ledState));
-}
 
 void sendReport() {
     DynamicJsonDocument doc(1024);
@@ -110,15 +153,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     }
     sendReport();
     
-    data[len] = 0; //guess this is termination char
-    if (strcmp((char*)data, "toggle") == 0) {
-      ledState = !ledState;
-      
-      // maybe this is too slow?
-      digitalWrite(LED_PIN, ledState);
-
-      notifyClients();
-    }
+    
   }
 }
 
@@ -139,19 +174,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
     case WS_EVT_ERROR:
       break;
   }
-}
-
-String processor(const String& var){
-  Serial.println(var);
-  if(var == "STATE"){
-    if (ledState){
-      return "ON";
-    }
-    else{
-      return "OFF";
-    }
-  }
-  return String();
 }
 
 // Callback: send homepage
@@ -221,6 +243,13 @@ void setup(){
     // init Websocket
     ws.onEvent(onEvent);
     server.addHandler(&ws);
+
+    // setup stepper
+    pinMode(HOME_LIM_PIN, INPUT_PULLUP);
+    pinMode(IDLE_LIM_PIN, INPUT_PULLUP);
+    
+    stepper.setAcceleration(mm2step(ACCEL));
+    // wait to set speed and enable outputs in homing
 }
 
 //========//
@@ -229,5 +258,39 @@ void setup(){
 
 void loop() {
     ws.cleanupClients();
-    // digitalWrite(ledPin, ledState);
+    
+    switch (status)
+    {
+    case HOMING_OUT:
+        if (digitalRead(IDLE_LIM_PIN) == LOW) {
+            // has reached idle end
+            // temporarily save current pos but not right because we don't know start
+            maxSteps = stepper.currentPosition();
+            status = HOMING_IN;
+        }
+        else{
+            stepper.run();
+        }
+        break;
+
+    case HOMING_IN:
+        if (digitalRead(HOME_LIM_PIN) == LOW) {
+            // has reached idle end
+            
+            // set current position to 0 and save max position
+            int tmpMax = maxSteps;
+            int nowPos = stepper.currentPosition();
+            maxSteps = tmpMax - nowPos;
+            stepper.setCurrentPosition(0);
+            
+            // now homed, set status to IDLE
+            status = IDLE;
+        }
+        else{
+            stepper.run();
+        }
+    
+    default:
+        break;
+    }
 }
