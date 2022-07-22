@@ -1,11 +1,12 @@
 /*
+https://github.com/bennett-j/stupid-linear-actuator/blob/main/software/stupid-linear-actuator-firmware/stupid-linear-actuator-firmware.ino
 https://github.com/me-no-dev/ESPAsyncWebServer
 https://shawnhymel.com/1882/how-to-create-a-web-server-with-websockets-using-an-esp32-in-arduino/
 https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiAccessPoint/WiFiAccessPoint.ino
 https://github.com/espressif/arduino-esp32/tree/master/libraries/WiFi/examples/WiFiClientEvents
 https://randomnerdtutorials.com/esp32-web-server-spiffs-spi-flash-file-system/
 https://randomnerdtutorials.com/esp32-websocket-server-arduino/
-
+https://github.com/teemuatlut/TMCStepper/blob/master/examples/TMC_AccelStepper/TMC_AccelStepper.ino
 
 VS code IntelliSense
 https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino#intellisense
@@ -20,6 +21,8 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 #include <SPIFFS.h>
 #include <WebSocketsServer.h>
 #include <ArduinoJson.h>
+
+
 
 //=======================//
 //  Constants & Globals  //
