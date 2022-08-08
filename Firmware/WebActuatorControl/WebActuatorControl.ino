@@ -54,11 +54,11 @@ Status status = DISABLE;
 
 // TODO: pin assignment
 const int LED_PIN = 2;
-const int STEP_PIN = 0;
-const int DIR_PIN = 0;
-const int ENABLE_PIN = 0;
-const int HOME_LIM_PIN = 0;
-const int IDLE_LIM_PIN = 0;
+const int STEP_PIN = 18;
+const int DIR_PIN = 5;
+const int ENABLE_PIN = 23;
+const int HOME_LIM_PIN = 34;
+const int IDLE_LIM_PIN = 35;
 
 const int steps_per_mm = 50;
 
