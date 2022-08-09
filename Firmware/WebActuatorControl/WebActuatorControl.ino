@@ -16,7 +16,7 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 
 #define DEBUG // comment out to remove debugging
 #ifdef DEBUG
-    #define DEBUG_PRINT(x) Serial.println(x)
+    #define DEBUG_PRINT(x) Serial.println(x); sendSerialWeb(x)
 #else
     #define DEBUG_PRINT(x)
 #endif
@@ -137,6 +137,20 @@ void sendReport()
     doc["m_start"] = start_pos;
     doc["m_stop"] = end_pos;
 
+    String output;
+    serializeJson(doc, output);
+    Serial.println(output);
+
+    ws.textAll(output);
+}
+
+void sendSerialWeb(const char* text)
+{
+    DynamicJsonDocument doc(1024);
+
+    doc["type"] = "serial";
+    doc["text"] = text;
+    
     String output;
     serializeJson(doc, output);
     Serial.println(output);
@@ -363,7 +377,7 @@ void loop()
             stepper.setCurrentPosition(0);
 
             DEBUG_PRINT("Max Steps (mm):");
-            DEBUG_PRINT(step2mm(maxSteps));
+            DEBUG_PRINT((char*)step2mm(maxSteps)); 
 
             // now homed, set status to IDLE
             status = IDLE;

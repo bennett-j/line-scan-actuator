@@ -28,6 +28,10 @@ function onMessage(event) {
         document.getElementById('m_start').innerHTML = msg.m_start;
         document.getElementById('m_end').innerHTML = msg.m_stop;
     }
+
+    if (msg.type == "serial") {
+        document.getElementById('serial-box').value =+ msg.text;
+    }
 }
 function onLoad(event) {
     initWebSocket();
