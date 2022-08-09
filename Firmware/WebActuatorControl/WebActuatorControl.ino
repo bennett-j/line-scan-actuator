@@ -55,7 +55,7 @@ const int ENABLE_PIN = 23;
 const int HOME_LIM_PIN = 33;
 const int IDLE_LIM_PIN = 32;
 
-const int steps_per_mm = 50;
+const int steps_per_mm = 13.33;
 
 int mm2step(int mm)
 {
@@ -68,10 +68,10 @@ int step2mm(int step)
 }
 
 const int ACCEL = mm2step(1000); // I think I can use this function here
-const int HOME_SPEED = mm2step(10);
-const int TRAVEL_SPEED = mm2step(20);
+const int HOME_SPEED = mm2step(60);
+const int TRAVEL_SPEED = mm2step(100);
 
-int velocity = 8;
+int velocity = 40;
 int start_pos = 0;
 int end_pos = 1000;
 
@@ -97,7 +97,7 @@ void sendReport()
     doc["m_vel"] = velocity;
     doc["m_start"] = start_pos;
     doc["m_stop"] = end_pos;
-    doc["m_pos"] = stepper.currentPosition();
+    doc["m_pos"] = step2mm(stepper.currentPosition());
 
     String output;
     serializeJson(doc, output);
