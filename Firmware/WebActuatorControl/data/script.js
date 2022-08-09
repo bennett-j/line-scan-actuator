@@ -30,7 +30,7 @@ function onMessage(event) {
     }
 
     if (msg.type == "serial") {
-        document.getElementById('serial-box').value =+ msg.text;
+        document.getElementById('serial-box').value += msg.text + "\n";
     }
 }
 function onLoad(event) {
