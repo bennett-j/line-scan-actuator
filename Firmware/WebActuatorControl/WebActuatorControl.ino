@@ -14,12 +14,7 @@ https://marketplace.visualstudio.com/items?itemName=vsciot-vscode.vscode-arduino
 2. press Ctrl + Alt + I (after new inclues) to rebuild the c_cpp_properties.json and have it find the right includes
 */
 
-#define DEBUG // comment out to remove debugging
-#ifdef DEBUG
-    #define DEBUG_PRINT(x) Serial.println(x); sendSerialWeb(x)
-#else
-    #define DEBUG_PRINT(x)
-#endif
+
 
 // Import libraries
 #include <WiFi.h>
@@ -93,6 +88,44 @@ AccelStepper stepper = AccelStepper(stepper.DRIVER, STEP_PIN, DIR_PIN);
 //  Functions  //
 //=============//
 
+void sendReport()
+{
+    DynamicJsonDocument doc(1024);
+
+    doc["type"] = "report";
+    doc["status"] = "IDLE";
+    doc["m_vel"] = velocity;
+    doc["m_start"] = start_pos;
+    doc["m_stop"] = end_pos;
+
+    String output;
+    serializeJson(doc, output);
+    Serial.println(output);
+
+    ws.textAll(output);
+}
+
+void sendSerialWeb(const char* text)
+{
+    DynamicJsonDocument doc(1024);
+
+    doc["type"] = "serial";
+    doc["text"] = text;
+    
+    String output;
+    serializeJson(doc, output);
+    Serial.println(output);
+
+    ws.textAll(output);
+}
+
+#define DEBUG // comment out to remove debugging
+#ifdef DEBUG
+    #define DEBUG_PRINT(x) Serial.println(x); sendSerialWeb(x)
+#else
+    #define DEBUG_PRINT(x)
+#endif
+
 // Send stepper to end position then home position
 void startHomeStepper()
 {
@@ -127,36 +160,7 @@ void WiFiEvent(WiFiEvent_t event)
     }
 }
 
-void sendReport()
-{
-    DynamicJsonDocument doc(1024);
 
-    doc["type"] = "report";
-    doc["status"] = "IDLE";
-    doc["m_vel"] = velocity;
-    doc["m_start"] = start_pos;
-    doc["m_stop"] = end_pos;
-
-    String output;
-    serializeJson(doc, output);
-    Serial.println(output);
-
-    ws.textAll(output);
-}
-
-void sendSerialWeb(const char* text)
-{
-    DynamicJsonDocument doc(1024);
-
-    doc["type"] = "serial";
-    doc["text"] = text;
-    
-    String output;
-    serializeJson(doc, output);
-    Serial.println(output);
-
-    ws.textAll(output);
-}
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
@@ -348,7 +352,7 @@ void loop()
     switch (status)
     {
     case HOMING_OUT:
-        if (digitalRead(IDLE_LIM_PIN) == LOW)
+        if (digitalRead(IDLE_LIM_PIN) == HIGH)
         {
             DEBUG_PRINT("REACHED IDLE END");
             // has reached idle end
@@ -365,7 +369,7 @@ void loop()
         break;
 
     case HOMING_IN:
-        if (digitalRead(HOME_LIM_PIN) == LOW)
+        if (digitalRead(HOME_LIM_PIN) == HIGH)
         {
             // has reached home end
             DEBUG_PRINT("REACHED HOME END");
