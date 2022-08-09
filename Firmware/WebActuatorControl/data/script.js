@@ -27,6 +27,7 @@ function onMessage(event) {
         document.getElementById('m_vel').innerHTML = msg.m_vel;
         document.getElementById('m_start').innerHTML = msg.m_start;
         document.getElementById('m_end').innerHTML = msg.m_stop;
+        document.getElementById('m_pos').innerHTML = msg.m_pos;
     }
 
     if (msg.type == "serial") {

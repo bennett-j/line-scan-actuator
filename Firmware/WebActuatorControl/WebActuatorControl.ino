@@ -77,7 +77,7 @@ int end_pos = 1000;
 
 int maxSteps = 0;
 
-
+long lastReportTime = millis();
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -93,10 +93,11 @@ void sendReport()
     DynamicJsonDocument doc(1024);
 
     doc["type"] = "report";
-    doc["status"] = "IDLE";
+    doc["status"] = getStatusText();
     doc["m_vel"] = velocity;
     doc["m_start"] = start_pos;
     doc["m_stop"] = end_pos;
+    doc["m_pos"] = stepper.currentPosition();
 
     String output;
     serializeJson(doc, output);
@@ -121,10 +122,22 @@ void sendSerialWeb(const char* text)
 
 #define DEBUG // comment out to remove debugging
 #ifdef DEBUG
-    #define DEBUG_PRINT(x) Serial.println(x); sendSerialWeb(x)
+    #define DEBUG_PRINT(x) Serial.println(x); delay(200); sendSerialWeb(x)
 #else
     #define DEBUG_PRINT(x)
 #endif
+
+const char* getStatusText() {
+    switch (status)
+    {
+    case DISABLE: return "Stepper Disabled";
+    case IDLE: return "Idle";
+    case HOMING_IN: return "Homing in";
+    case HOMING_OUT: return "Homing out";
+    case MOVING: return "Moving";
+    default: return "Unknown";
+    }
+}
 
 // Send stepper to end position then home position
 void startHomeStepper()
@@ -133,7 +146,8 @@ void startHomeStepper()
 
     status = HOMING_OUT;
     // before first homing, stepper is disabled
-    stepper.enableOutputs();
+    //stepper.enableOutputs(); not working
+    digitalWrite(ENABLE_PIN, LOW);
 
     stepper.setMaxSpeed(HOME_SPEED);
     // start move plenty of steps to idle end
@@ -217,7 +231,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
             else if (strcmp(doc["action"], "start") == 0)
             {
                 DEBUG_PRINT("Action: START");
-                stepper.setMaxSpeed(velocity);
+                stepper.setMaxSpeed(mm2step(velocity));
                 stepper.moveTo(mm2step(end_pos));
             }
         }
@@ -335,6 +349,9 @@ void setup()
     pinMode(HOME_LIM_PIN, INPUT_PULLUP);
     pinMode(IDLE_LIM_PIN, INPUT_PULLUP);
 
+    pinMode(ENABLE_PIN, OUTPUT);
+    digitalWrite(ENABLE_PIN, HIGH); //to disable stepper
+    //stepper.setEnablePin(ENABLE_PIN); not working
     stepper.setAcceleration(mm2step(ACCEL));
     // wait to set speed and enable outputs in homing
 
@@ -361,6 +378,7 @@ void loop()
             // start move plenty of steps to home end
             stepper.move(mm2step(2 * -1200));
             status = HOMING_IN;
+            sendReport();
         }
         else
         {
@@ -373,18 +391,20 @@ void loop()
         {
             // has reached home end
             DEBUG_PRINT("REACHED HOME END");
-
+            DEBUG_PRINT("print a thing");
             // set current position to 0 and save max position
             int tmpMax = maxSteps;
             int nowPos = stepper.currentPosition();
             maxSteps = tmpMax - nowPos;
             stepper.setCurrentPosition(0);
 
-            DEBUG_PRINT("Max Steps (mm):");
-            DEBUG_PRINT((char*)step2mm(maxSteps)); 
+            // DEBUG_PRINT("Max Steps (mm):");
+            // DEBUG_PRINT((char*)step2mm(maxSteps)); //this line was breaking some stuff - execution was getting stuck here
+            DEBUG_PRINT("Print another thing");
 
             // now homed, set status to IDLE
             status = IDLE;
+            sendReport();
         }
         else
         {
@@ -393,6 +413,16 @@ void loop()
         break;
     
     case IDLE: // no break
+
+        if ((millis() - lastReportTime) > 2000) {
+            sendReport();
+            lastReportTime = millis();
+        }
+
+        //tmp
+        status = stepper.run() ? MOVING : IDLE;
+        break;
+
     case MOVING:
         // this is simple - perhaps overly simple (and inefficient) and may evolve with project
         status = stepper.run() ? MOVING : IDLE;
