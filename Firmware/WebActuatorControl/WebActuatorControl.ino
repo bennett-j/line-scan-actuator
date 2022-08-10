@@ -55,7 +55,7 @@ const int ENABLE_PIN = 23;
 const int HOME_LIM_PIN = 33;
 const int IDLE_LIM_PIN = 32;
 
-const float steps_per_mm = 13.35;
+const float steps_per_mm = 13.34;
 
 int mm2step(int mm)
 {
@@ -91,6 +91,7 @@ AccelStepper stepper = AccelStepper(stepper.DRIVER, STEP_PIN, DIR_PIN);
 void sendReport()
 {
     DynamicJsonDocument doc(1024);
+    // TODO: optimise document size
 
     doc["type"] = "report";
     doc["status"] = getStatusText();
@@ -380,6 +381,7 @@ void loop()
             status = HOMING_IN;
             sendReport();
         }
+        //TODO: else if reaches home pin first then flip direction
         else
         {
             stepper.run();
@@ -424,6 +426,12 @@ void loop()
         break;
 
     case MOVING:
+
+        // if the stepper hits a pin (it shouldn't but just in case) then stop the motor
+        if (digitalRead(IDLE_LIM_PIN) || digitalRead(HOME_LIM_PIN)) {
+            stepper.stop();
+        }
+
         // this is simple - perhaps overly simple (and inefficient) and may evolve with project
         status = stepper.run() ? MOVING : IDLE;
         // TODO: check limit pins
