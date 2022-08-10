@@ -67,7 +67,7 @@ int step2mm(int step)
     return step / steps_per_mm; // TODO: deal with rounding
 }
 
-const int ACCEL = mm2step(1000); // I think I can use this function here
+const int ACCEL = mm2step(100); // I think I can use this function here
 const int HOME_SPEED = mm2step(60);
 const int TRAVEL_SPEED = mm2step(100);
 
@@ -380,6 +380,7 @@ void loop()
             stepper.move(mm2step(2 * -1200));
             status = HOMING_IN;
             sendReport();
+            //TODO: backoff
         }
         //TODO: else if reaches home pin first then flip direction
         else
@@ -394,6 +395,8 @@ void loop()
             // has reached home end
             DEBUG_PRINT("REACHED HOME END");
             DEBUG_PRINT("print a thing");
+            
+            stepper.move(5); // move 5 steps away from limit switch
             // set current position to 0 and save max position
             int tmpMax = maxSteps;
             int nowPos = stepper.currentPosition();
