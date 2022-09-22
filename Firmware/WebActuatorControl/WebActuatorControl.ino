@@ -69,7 +69,7 @@ int step2mm(int step)
 
 const int ACCEL = mm2step(100); // I think I can use this function here
 const int HOME_SPEED = mm2step(60);
-const int TRAVEL_SPEED = mm2step(100);
+const int TRAVEL_SPEED = mm2step(250);
 
 int velocity = 40;
 int start_pos = 0;
@@ -392,11 +392,14 @@ void loop()
     case HOMING_IN:
         if (digitalRead(HOME_LIM_PIN) == HIGH)
         {
+            stepper.stop();
             // has reached home end
             DEBUG_PRINT("REACHED HOME END");
-            DEBUG_PRINT("print a thing");
             
-            stepper.move(5); // move 5 steps away from limit switch
+            stepper.move(50); // move steps away from limit switch
+            while(stepper.run()){} //what is the blocking function for a relative move?!
+            DEBUG_PRINT("moved away");
+
             // set current position to 0 and save max position
             int tmpMax = maxSteps;
             int nowPos = stepper.currentPosition();
@@ -405,7 +408,7 @@ void loop()
 
             // DEBUG_PRINT("Max Steps (mm):");
             // DEBUG_PRINT((char*)step2mm(maxSteps)); //this line was breaking some stuff - execution was getting stuck here
-            DEBUG_PRINT("Print another thing");
+            DEBUG_PRINT("Homed");
 
             // now homed, set status to IDLE
             status = IDLE;
